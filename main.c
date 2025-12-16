@@ -6,7 +6,10 @@
 #define PADDLE_WIDTH 5
 #define BALL_SIZE 6
 
-bool collide(SDL_Rect a, SDL_Rect b);
+bool rects_overlap(SDL_Rect a, SDL_Rect b) {
+  return (a.x < b.x + b.w) && (a.x + a.w > b.x) && (a.y < b.y + b.h) &&
+         (a.y + a.h > b.y);
+}
 
 int main() {
 
@@ -27,8 +30,10 @@ int main() {
                            PADDLE_HEIGHT};
   SDL_Rect ball = {WINDOW_LENGTH / 2, WINDOW_WIDTH / 2, BALL_SIZE, BALL_SIZE};
 
-  bool move_down = false;
-  bool move_up = false;
+  bool left_move_up = false;
+  bool left_move_down = false;
+  bool right_move_up = false;
+  bool right_move_down = false;
 
   int ball_x_vel = 3;
   int ball_y_vel = 3;
@@ -51,10 +56,16 @@ int main() {
 
         switch (event.key.key) {
         case SDLK_DOWN:
-          move_down = true;
+          right_move_down = true;
           break;
         case SDLK_UP:
-          move_up = true;
+          right_move_up = true;
+          break;
+        case SDLK_W:
+          left_move_up = true;
+          break;
+        case SDLK_S:
+          left_move_down = true;
           break;
         }
       }
@@ -62,21 +73,41 @@ int main() {
       if (event.type == SDL_EVENT_KEY_UP) {
         switch (event.key.key) {
         case SDLK_DOWN:
-          move_down = false;
+          right_move_down = false;
           break;
         case SDLK_UP:
-          move_up = false;
+          right_move_up = false;
+          break;
+        case SDLK_W:
+          left_move_up = false;
+          break;
+        case SDLK_S:
+          left_move_down = false;
           break;
         }
       }
     }
 
-    if (collide(ball, left_paddle)) {
+    ball.x += ball_x_vel;
+    ball.y += ball_y_vel;
+
+    if (right_move_down)
+      right_paddle.y += 6;
+    if (right_move_up)
+      right_paddle.y -= 6;
+
+    if (left_move_down)
+      left_paddle.y += 6;
+    if (left_move_up)
+      left_paddle.y -= 6;
+
+    if (rects_overlap(ball, left_paddle)) {
       ball_x_vel *= -1;
     }
 
-    ball.x += ball_x_vel;
-    ball.y += ball_y_vel;
+    if (rects_overlap(right_paddle, ball)) {
+      ball_x_vel *= -1;
+    }
 
     if (ball.x >= 900 || ball.x <= 0) {
       ball_x_vel *= -1;
@@ -86,15 +117,6 @@ int main() {
       ball_y_vel *= -1;
     }
 
-    if (ball.y <= (left_paddle_y + PADDLE_HEIGHT) && ball.y >= left_paddle_y) {
-      ball_x_vel *= -1;
-    }
-
-    if (move_down)
-      left_paddle.y += 6;
-    if (move_up)
-      left_paddle.y -= 6;
-
     SDL_UpdateWindowSurface(pwindow);
     SDL_Delay(16);
   }
@@ -103,9 +125,4 @@ int main() {
   SDL_Quit();
 
   return 0;
-}
-
-bool collide(SDL_Rect a, SDL_Rect b) {
-  return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h &&
-         a.y + a.h > b.y;
 }
